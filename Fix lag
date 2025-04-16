@@ -2,43 +2,56 @@ local Lighting = game:GetService("Lighting")
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 local StarterGui = game:GetService("StarterGui")
+local Workspace = game:GetService("Workspace")
 
--- Giảm 60% đồ họa
+-- Phần 1: Tối ưu ánh sáng
 Lighting.GlobalShadows = false -- Tắt bóng toàn cục
-Lighting.Brightness = 0.7 -- Giảm độ sáng (giảm 30%)
+Lighting.Brightness = 0.6 -- Giảm độ sáng (giảm 40%)
 Lighting.ShadowSoftness = 0
-Lighting.EnvironmentDiffuseScale = 0.4 -- Giảm ánh sáng khuếch tán (giảm 60%)
-Lighting.EnvironmentSpecularScale = 0.4 -- Giảm ánh sáng phản chiếu (giảm 60%)
+Lighting.EnvironmentDiffuseScale = 0.3 -- Giảm ánh sáng khuếch tán (giảm 70%)
+Lighting.EnvironmentSpecularScale = 0.3 -- Giảm ánh sáng phản chiếu (giảm 70%)
+Lighting.ClockTime = 12 -- Đặt thời gian trong game là ban ngày để giảm ánh sáng phức tạp
+Lighting.FogEnd = 1000 -- Giảm sương mù để tăng hiệu suất
+Lighting.FogStart = 500
 
--- Đặt chất lượng đồ họa ở mức trung bình thấp (khoảng 40% so với max)
-settings().Rendering.QualityLevel = Enum.QualityLevel.Level05
+-- Phần 2: Giảm chất lượng
+settings().Rendering.QualityLevel = Enum.QualityLevel.Level03 -- Giảm chất lượng đồ họa xuống thấp hơn
+settings().Rendering.TessellationQuality = Enum.QualityLevel.Level01 -- Giảm chất lượng lưới
+settings().Rendering.EnableParticles = false -- Tắt toàn bộ hạt mặc định
 
--- Xóa 60% hiệu ứng chiêu thức (xác suất 60%)
-for _, v in pairs(game:GetDescendants()) do
+-- Phần 3: Làm mịn + Xóa hiệu ứng (xóa 60% hiệu ứng chiêu thức) trong Workspace
+for _, v in pairs(Workspace:GetDescendants()) do
     local shouldDisable = math.random() <= 0.6 -- Xác suất 60%
     if shouldDisable then
         if v:IsA("ParticleEmitter") or v:IsA("Trail") then
             v.Enabled = false -- Tắt hiệu ứng hạt và vệt của chiêu thức
         elseif v:IsA("BasePart") then
             v.CastShadow = false -- Tắt bóng của các đối tượng
+            v.Material = Enum.Material.SmoothPlastic -- Làm mịn vật liệu
         elseif v:IsA("PointLight") or v:IsA("SurfaceLight") then
             v.Enabled = false -- Tắt ánh sáng động từ chiêu thức
         end
     end
 end
 
--- Vòng lặp để đảm bảo các hiệu ứng chiêu thức mới có xác suất 60% bị xóa
-RunService.Heartbeat:Connect(function()
-    for _, v in pairs(game:GetDescendants()) do
-        local shouldDisable = math.random() <= 0.6 -- Xác suất 60%
-        if shouldDisable then
-            if v:IsA("ParticleEmitter") or v:IsA("Trail") then
-                v.Enabled = false
-            elseif v:IsA("BasePart") then
-                v.CastShadow = false
-            elseif v:IsA("PointLight") or v:IsA("SurfaceLight") then
-                v.Enabled = false
-            end
+-- Tắt các hiệu ứng sau xử lý (nằm trong Lighting)
+for _, v in pairs(Lighting:GetChildren()) do
+    if v:IsA("BloomEffect") or v:IsA("BlurEffect") or v:IsA("ColorCorrectionEffect") then
+        v.Enabled = false -- Tắt các hiệu ứng sau xử lý
+    end
+end
+
+-- Phần 4: Theo dõi hiệu ứng mới trong Workspace
+Workspace.DescendantAdded:Connect(function(v)
+    local shouldDisable = math.random() <= 0.6 -- Xác suất 60%
+    if shouldDisable then
+        if v:IsA("ParticleEmitter") or v:IsA("Trail") then
+            v.Enabled = false
+        elseif v:IsA("BasePart") then
+            v.CastShadow = false
+            v.Material = Enum.Material.SmoothPlastic -- Làm mịn vật liệu mới
+        elseif v:IsA("PointLight") or v:IsA("SurfaceLight") then
+            v.Enabled = false
         end
     end
 end)
@@ -100,7 +113,7 @@ end)
 
 -- Thông báo script đã chạy
 StarterGui:SetCore("SendNotification", {
-    Title = "Fix Lag Script",
-    Text = "Reduced graphics by 60%, removed 60% skill effects, and enabled rainbow FPS counter.",
+    Title = "Make By Danh Hai",
+    Text = "Optimized lighting, reduced quality, smoothed + removed 60% effects, enabled FPS counter.",
     Duration = 5
 })
